@@ -1,6 +1,6 @@
 [build]
   base = "label-energie-web-master"
-  command = "npm run build"
+  command = "pnpm install --force && pnpm run build"
   publish = "label-energie-web-master/.next"
 
 [[plugins]]
@@ -11,3 +11,4 @@
   NODE_VERSION = "18"
   NEXT_PRIVATE_STANDALONE = "true"
   NEXT_TELEMETRY_DISABLED = "1"
+  PNPM_FLAGS = "--force --no-frozen-lockfile"
