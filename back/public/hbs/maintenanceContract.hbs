@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}}</title>
+  <style>
+    @page {
+      margin-bottom: 30px;
+      margin-top: 30px;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      --primary: #26D0B4;
+      --secondary: #09B7F6;
+      padding: 0 30px;
+    }
+
+    .card .field {
+      margin: 7px 0;
+    }
+
+
+    .card .field label {
+      margin-right: 3px;
+    }
+
+    .card .field span {
+      margin-right: 35px;
+      font-style: italic;
+    }
+
+    .product .field {
+      margin: 2px 0 !important;
+      font-size: 14px;
+    }
+
+    .product img {
+      margin-right: 20px;
+      margin-top:5px;
+      margin-bottom:5px;
+    }
+
+    .perks {
+      color: var(--primary);
+      font-size: 10px;
+      margin-right: 20px;
+      position:absolute;
+      left:15px;
+      bottom:0px;
+    }
+
+    .checkDiv {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 15px;
+    }
+
+    .checkDiv label {
+      margin-left: 10px;
+      color:#777777;
+      font-size: 13px;
+    }
+
+    .signForm p {
+      margin: 0;
+      font-size: 16px;
+      margin-bottom: 5px;
+    }
+
+    .signForm p bold {
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    .footer {
+      margin-top: 40px;
+    }
+
+    .footer p {
+      text-align: center;
+      margin: 0;
+      font-size: 11px;
+    }
+  </style>
+</head>
+
+<body>
+  <div style="display:flex;justify-content: space-between;align-items: center">
+    <div style="width:200px">
+      <img src="{{imageHeader.logo}}" height="32px" />
+    </div>
+    <img src="{{imageHeader.phoneNumber}}" height="60px" />
+    <div style="width:200px; display:flex;justify-content:flex-end">
+      <img src="{{imageHeader.RGE}}" height="40px" />
+    </div>
+  </div>
+  <p style="font-weight: 600;margin-top: 20px;">Contrat d'entretien N°{{contractNum}}</p>
+  <div class="card" style="position:relative; border-radius: 5px;overflow:hidden">
+    <div
+      style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to right, var(--secondary), var(--primary)); z-index: -1;">
+    </div>
+    <div
+      style="position: absolute; top: 2px; left: 2px; right: 2px; bottom: 2px; background: white; z-index: -1; border-radius: 5px;">
+    </div>
+
+    <!-- Souscriptor -->
+    <div
+      style="background: linear-gradient(to left, var(--primary), var(--secondary)); color: white; padding: 10px; border-radius: 5px 5px 0 0; text-align: left;">
+      <strong>Souscripteur</strong>
+      <span style="float: right;">
+        <input type="checkbox" {{isOwner}}>
+        <label>Propriétaire</label>
+        <input type="checkbox" {{isTenant}}>
+        <label>Locataire</label>
+      </span>
+    </div>
+    <div style="padding: 10px;">
+      <div class="field">
+        <label for="nom" style="display: inline-block">Nom & Prénom :</label>
+        <span>{{user.name}}</span>
+      </div>
+      <div class="field">
+        <label for="adresse" style="display: inline-block;">Adresse :</label>
+        <span>{{user.address.label}}</span>
+        <label for="cp" style="display: inline-block; ">Code Postal :</label>
+        <span>{{user.address.zipCode}}</span>
+        <label for="ville" style="display: inline-block; ">Ville :</label>
+        <span>{{user.address.city}}</span>
+      </div>
+      <div class="field">
+        <label for="mail" style="display: inline-block; ;">Mail :</label>
+        <span>{{user.email}}</span>
+      </div>
+      <div class="field">
+        <label for="tel" style="display: inline-block; ">Tel :</label>
+        <span>{{user.tel}}</span>
+      </div>
+    </div>
+  </div>
+
+  <p style="font-weight:600;text-align: center;margin-top: 10px; font-size: 24px;">
+    Identification
+    du (ou des)
+    appareil(s) :</p>
+
+  <!-- ForEach product -->
+  {{#each products}}
+    <div class="card product" style="position:relative; border-radius: 5px;overflow:hidden;margin-bottom:15px">
+      <div
+        style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to right, var(--secondary), var(--primary)); z-index: -1;border-radius: 5px;">
+      </div>
+      <div
+        style="position: absolute; top: 2px; left: 2px; right: 2px; bottom: 2px; background: white; z-index: -1; border-radius: 5px;">
+      </div>
+
+      <div
+        style="background: linear-gradient(to left, var(--primary), var(--secondary)); color: white; padding: 10px; border-radius: 5px 5px 0 0; text-align: left;align-items: center;display:flex">
+
+        <input type="checkbox" style="width:20px;height:20px">
+        <label style="font-size: 18px;font-weight: 600;margin-left: 7px;">{{this.name}}</label>
+      </div>
+      <div style="padding: 5px 15px;display:flex;align-items: flex-start;">
+        <div style="width:100%;padding-bottom:15px">
+          <div style="display:grid;grid-template-columns: repeat(3,1fr)">
+            {{#if this.brand}}
+            <div class="field">
+              <label>Marque :</label>
+              <span>{{this.brand}}</span>
+            </div>
+            {{/if}}
+            {{#if this.model}}
+            <div class="field">
+              <label>Modèle :</label>
+              <span>{{this.model}}</span>
+            </div>
+            {{/if}}
+            {{#if this.serial}}
+            <div class="field">
+              <label>N° Série :</label>
+              <span>{{this.serial}}</span>
+            </div>
+            {{/if}}
+          </div>
+          <div style="display:grid;grid-template-columns: repeat(3,1fr)">
+            {{#if this.age}}
+              <div class="field">
+                <label>Age : </label>
+                <span>{{this.age}}</span>
+              </div>
+            {{/if}}
+            {{#if this.state}}
+              <div class="field">
+                <label>État : </label>
+                <span>{{this.state}}</span>
+              </div>
+            {{/if}}
+            {{#if this.withPACOptions}}
+              <div class="field">
+                <label>Radiateurs : </label>
+                <span>{{this.withPACOptions}}</span>
+              </div>
+            {{/if}}
+          </div>
+          <p class="perks">Prise en charge : Révision {{revisionRecurrence}} + Vérification complète + Dépannage sous 48h +
+            Attestation
+            d'entretien
+            pour votre assureur</p>
+        </div>
+        <img src="{{this.image}}" height="50px" />
+      </div>
+    </div>
+  {{/each}}
+
+  <!-- SignComponent -->
+  <div
+    style="display:grid;grid-template-columns: repeat(2,1fr);background-color: #d4f5ff;padding:10px;column-gap: 40px;margin-top: 25px;border-radius: 10px;">
+    <div>
+      <div class="checkDiv">
+        <input type="checkbox" height="100%" checked />
+        <label>Je choisi d’adhérer au contrat présenté et souscrit par Label Energie,
+          moyennant une cotisation {{payment.recurrence}} de {{payment.price}} € payable
+          dès la souscription du contrat puis à chaque échéance mensuelle, et je déclare
+          à voir reçu et pris connaissance, accepter et conserver les conditions générales
+          de vente valant notice d’information indiquées au dos du présent contrat.
+          En signant le client déclare avoir pris connaissance et approuvé les termes
+          recto verso des conditions générales particulières du présent contrat.
+        </label>
+      </div>
+      <div class="checkDiv">
+        <input type="checkbox" checked />
+        <label>En cochant cette case, j’accepte les conditions générales du contrat d’entretien
+          ainsi que le prélèvement sur mon compte bancaire.</label>
+      </div>
+    </div>
+    <div class="signForm">
+      <p>
+        <bold>Total des formules : {{payment.price}}€ TTC / {{payment.recurrenceUnit}}</bold>
+      </p>
+      <p style="margin-top:10px">Fait à {{user.address.city}}</p>
+      <p>Le {{payment.date}}</p>
+      <p style="margin-top:10px">
+        <bold>Signature Client</bold>
+      </p>
+      <div style="width:100%;min-height:100px;background-color: white;margin-top: 10px;"></div>
+    </div>
+  </div>
+  <div class="footer">
+
+    <p>Label Energie · SAS au Capital de 200 000 € · SIRET : 89046262500025</p>
+    <p>
+      3 Allée du 1er Mai, 77183 Croissy Beaubourg - Mail : sav@labelenergie.fr - Tel : 01 81 72 39 59
+    </p>
+  </div>
+</body>
+
+</html>

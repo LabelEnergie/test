@@ -1,0 +1,54 @@
+{
+  "pages": {
+    "/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/commons.js",
+      "static/chunks/app/page.js"
+    ],
+    "/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/commons.js",
+      "static/css/vendors-node_modules_animate_css_animate_css-node_modules_next_font_google_target_css.css",
+      "static/chunks/app/layout.js"
+    ],
+    "/not-found": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/commons.js",
+      "static/chunks/app/not-found.js"
+    ],
+    "/simulateur/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/commons.js",
+      "static/chunks/app/simulateur/page.js"
+    ],
+    "/app/mon-compte/mes-informations/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/commons.js",
+      "static/chunks/app/app/mon-compte/mes-informations/page.js"
+    ],
+    "/app/mon-compte/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/commons.js",
+      "static/chunks/app/app/mon-compte/layout.js"
+    ],
+    "/app/mon-compte/mes-dossiers/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/commons.js",
+      "static/chunks/vendors-_app-pages-browser_node_modules_chakra-ui_layout_dist_chunk-JARCRF6W_mjs-_app-pages-b-990954.js",
+      "static/chunks/app/app/mon-compte/mes-dossiers/page.js"
+    ],
+    "/app/connexion/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/commons.js",
+      "static/chunks/app/app/connexion/page.js"
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1440px" height="1850.3934px" viewBox="0 0 1440 1850.3934" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Line 12</title>
+    <defs>
+        <linearGradient x1="58.5013491%" y1="0%" x2="5.1218574%" y2="100%" id="linearGradient-1">
+            <stop stop-color="#26D0B4" offset="0%"></stop>
+            <stop stop-color="#09B7F6" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g id="Site" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" opacity="0.135718936" stroke-linecap="square">
+        <g id="Contrat-d'entretien" transform="translate(0.000000, -1271.606599)" stroke="url(#linearGradient-1)" stroke-width="200">
+            <path d="M1529,3022 C1118.33333,3022 880.333333,2729.33333 815,2144 C749.666667,1558.66667 466.462368,1306 -34.6128958,1386" id="Line-12"></path>
+        </g>
+    </g>
+</svg>
