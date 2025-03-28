@@ -6,6 +6,7 @@ import Button from "../shared/Button";
 import { SHADOW } from "@/style/constants";
 import ContactModal, { ContactModalRef } from "../shared/Modals/ContactModal";
 import { useRef } from "react";
+import TechnicalDocModal, { TechnicalDocModalRef } from "../shared/Modals/TecnicalDocModal";
 
 const IMAGES = [
   "entretien_clim1.jpg",
@@ -20,6 +21,7 @@ export default function SAVHomeSection(props: SAVHomeSectionProps) {
   const {} = props;
 
   const contactModalRef = useRef<ContactModalRef>(null);
+  const TechnicalDocModalRef = useRef<TechnicalDocModalRef>(null);
 
   return (
     <>
@@ -48,7 +50,7 @@ export default function SAVHomeSection(props: SAVHomeSectionProps) {
               <Button mt={20} onClick={() => contactModalRef.current?.onOpen()}>
                 J'ai besoin d'assistance
               </Button>
-              <Button variant="outline" mt={5}>
+              <Button variant="outline" mt={5} onClick={() => TechnicalDocModalRef.current?.onOpen()}>
                 Doc Technique
               </Button>
             </Box>
@@ -75,6 +77,7 @@ export default function SAVHomeSection(props: SAVHomeSectionProps) {
         </Box>
       </section>
       <ContactModal ref={contactModalRef} />
+      <TechnicalDocModal ref={TechnicalDocModalRef} />
     </>
   );
 }
