@@ -1,7 +1,7 @@
 [build]
-  base = "."
+  base = "label-energie-web-master"
   command = "npm run build"
-  publish = ".next"
+  publish = "label-energie-web-master/.next"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
