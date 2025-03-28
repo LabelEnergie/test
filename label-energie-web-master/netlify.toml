@@ -1,7 +1,7 @@
 [build]
   base = "label-energie-web-master"
   command = "pnpm install --force && pnpm run build"
-  publish = "label-energie-web-master/.next"
+  publish = ".next"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
