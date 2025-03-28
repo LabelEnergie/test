@@ -37,6 +37,7 @@
   },
   "devDependencies": {
     "@firebase/auth-types": "^0.13.0",
+    "@netlify/plugin-nextjs": "^5.10.1",
     "@types/docusign-esign": "^5.19.6",
     "@types/firebase": "^2.4.32",
     "@types/lodash.get": "^4.4.9",
