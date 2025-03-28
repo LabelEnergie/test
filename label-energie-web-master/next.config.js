@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   productionBrowserSourceMaps: false,
+  output: 'standalone',
+  experimental: {
+    appDir: true
+  },
   webpack: (config, { dev, isServer }) => {
     if (dev) {
       // Configuration des logs détaillés pour Next.js 14.2.3
