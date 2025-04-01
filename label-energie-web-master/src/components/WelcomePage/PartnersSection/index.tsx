@@ -94,6 +94,8 @@ export default function PartnersSection() {
                 "2xl": "450px",
               }}
               rounded="2xl"
+              objectFit="cover"  // Ajout de cette propriété uniquement
+              w="100%"          // Assure que l'image prend toute la largeur
             />
             <Text
               position="absolute"

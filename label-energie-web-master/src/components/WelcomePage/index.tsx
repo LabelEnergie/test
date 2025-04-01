@@ -45,7 +45,7 @@ Nous sommes convaincus que l’énergie solaire est la clé d’un avenir durabl
       <PartnersSection />
       <ReviewsSection />
       <CetelemSection pb={10}/>
-      <CertificationsSection />
+      {/* <CertificationsSection /> */}
       <DownloadAppSection mt={0}/>
       <CertificationsSection />
       <ContactSection />

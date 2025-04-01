@@ -1,6 +1,4 @@
 {
   "/page": "app/page.js",
-  "/_not-found/page": "app/_not-found/page.js",
-  "/app/mon-compte/mes-dossiers/page": "app/app/mon-compte/mes-dossiers/page.js",
-  "/app/mon-compte/mes-informations/page": "app/app/mon-compte/mes-informations/page.js"
+  "/simulateur/page": "app/simulateur/page.js"
 }
