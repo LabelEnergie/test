@@ -1,27 +1,26 @@
 import { TUser } from "./auth.types";
 import { TSimulatorResult } from "./simulator.types";
 
-export type TFolder = {
+// Add the simulationId property to your TFolder interface
+export interface TFolder {
   id: string;
   userId: string;
   name: string;
-  createdAt: string;
-  updatedAt: string;
   date: Date;
   status: {
     id: FolderType;
     color: string;
     label: string;
   };
-  products: TSimulatorResult[];
-  documents: {
+  documents: Array<{
     name: string;
-    url: string;
-    iconUrl: string;
     type: FolderDocumentType;
-  }[];
+    url?: string;
+  }>;
+  products: Array<any>; // Or define a more specific type
   pdfLink: string;
   numMPR?: string;
+  simulationId: string; // Add this property
 };
 
 export enum FolderType {

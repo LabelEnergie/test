@@ -1,74 +1,42 @@
-import { Body, Controller, Post, Query, HttpException, HttpStatus } from '@nestjs/common';
+import { Body, Controller, HttpStatus, Post } from '@nestjs/common';
 import { PaymentService } from './payment.service';
-import { GoCardlessService } from './gocardless/gocardless.service';
-import { Public } from '../auth/decorators/public.decorator';
+import { TCreatePaymentBody } from './payment.type';
+import { Public } from 'src/constants';
+import { throwError } from 'src/utils/error';
 
-@Controller('payment') // Le préfixe '/api' est géré globalement
+@Controller('payment')
 export class PaymentController {
-  constructor(
-    private readonly stripeService: PaymentService,
-    private readonly gocardlessService: GoCardlessService
-  ) {}
+  constructor(private readonly paymentService: PaymentService) {}
 
   @Post('create-subscription')
   @Public()
-  async createSubscription(
-    @Body() body: {
-      email: string;
-      paymentMethodId: string;
-      interval: 'month' | 'year';
-      contract: {
-        type: 'essentiel' | 'liberte' | 'securite';
-        productIds: number[];
-      };
-    },
-    @Query('provider') provider: string = 'stripe'
-  ) {
+  async createSubscription(@Body() body: TCreatePaymentBody) {
     try {
-      // Correction automatique de la faute de frappe
-      provider = provider.toLowerCase();
-      if (provider === 'gocardles') provider = 'gocardless';
+      // Create Stripe Client
+      const customer = await this.paymentService.createCustomer(
+        body.email,
+        body.paymentMethodId,
+      );
 
-      const service = provider === 'stripe' 
-        ? this.stripeService 
-        : this.gocardlessService;
-
-      if (!service) {
-        throw new HttpException(
-          'Invalid payment provider. Use "stripe" or "gocardless"',
-          HttpStatus.BAD_REQUEST
-        );
-      }
-
-      const customer = await service.createCustomer(body.email, body.paymentMethodId);
-      const priceId = await service.getPriceId(
+      // Get priceId
+      const priceId = await this.paymentService.getPriceIdByType(
         body.email,
         body.interval,
         body.contract.type,
-        body.contract.productIds
-      );
-      const subscription = await service.createSubscription(
-        customer.id,
-        body.paymentMethodId,
-        priceId
+        body.contract.productIds,
       );
 
-      return {
-        success: true,
-        provider,
-        subscriptionId: subscription.id,
-        status: subscription.status,
-        customerId: customer.id
-      };
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus.BAD_REQUEST,
-          message: error.message,
-          provider
-        },
-        HttpStatus.BAD_REQUEST
+      // Create subscription
+      const subscription = await this.paymentService.createSubscription(
+        customer.id,
+        body.paymentMethodId,
+        priceId,
       );
+
+      return subscription;
+    } catch (error) {
+      console.log(error);
+      throwError(error.message, HttpStatus.BAD_REQUEST);
     }
   }
 }

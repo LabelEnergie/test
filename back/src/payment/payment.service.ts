@@ -1,45 +1,36 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { IPaymentProvider } from './interfaces/payment-provider.interface';
+import { HttpStatus, Injectable } from '@nestjs/common';
+import { ENV } from 'src/constants';
+import { ToolsService } from 'src/tools/tools.service';
+import { throwError } from 'src/utils/error';
 import Stripe from 'stripe';
 
 @Injectable()
-export class PaymentService implements IPaymentProvider {
+export class PaymentService {
   private stripe: Stripe;
 
-  constructor() {
-    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  constructor(private readonly toolsService: ToolsService) {
+    const { STRIPE } = ENV();
+    this.stripe = new Stripe(STRIPE.SECRET_KEY, {
       apiVersion: '2024-06-20'
     });
   }
 
-  async createCustomer(email: string, paymentMethodId: string): Promise<{ id: string }> {
+  async createCustomer(email: string, paymentMethodId: string) {
     try {
-      const customer = await this.stripe.customers.create({
+      return await this.stripe.customers.create({
         email,
         payment_method: paymentMethodId,
-        invoice_settings: {
-          default_payment_method: paymentMethodId
-        }
+        invoice_settings: { default_payment_method: paymentMethodId }
       });
-      return { id: customer.id };
     } catch (error) {
-      throw new HttpException(
-        `Stripe customer creation failed: ${error.message}`,
-        HttpStatus.BAD_REQUEST
-      );
+      throwError('Error creating customer', HttpStatus.BAD_REQUEST);
     }
   }
 
-  async getPriceId(
-    email: string,
-    interval: 'month' | 'year',
-    type: string,
-    productIds: number[],
-    amount?: number
-  ): Promise<string> {
+  async getPriceIdByType(email: string, interval: 'month' | 'year', type: string, productIds: number[]) {
     try {
-      // Calcul simplifié sans toolsService
-      const totalPrice = productIds.length * 1000; // Exemple: 10€ par produit
+      const { totalPrice } = await this.toolsService.getCustomContractPrice(type, productIds);
+      // Create or get price from Stripe
       const price = await this.stripe.prices.create({
         unit_amount: Math.round(totalPrice * 100),
         currency: 'eur',
@@ -50,40 +41,23 @@ export class PaymentService implements IPaymentProvider {
       });
       return price.id;
     } catch (error) {
-      throw new HttpException(
-        `Stripe price creation failed: ${error.message}`,
-        HttpStatus.BAD_REQUEST
-      );
+      throwError('Error getting price', HttpStatus.BAD_REQUEST);
     }
   }
 
-  async createSubscription(
-    customerId: string,
-    paymentMethodId: string,
-    priceId: string
-  ): Promise<any> {
+  async createSubscription(customerId: string, paymentMethodId: string, priceId: string) {
     try {
-      const subscription = await this.stripe.subscriptions.create({
+      return await this.stripe.subscriptions.create({
         customer: customerId,
         items: [{ price: priceId }],
         payment_settings: {
           payment_method_types: ['card'],
           save_default_payment_method: 'on_subscription'
-        }
+        },
+        expand: ['latest_invoice.payment_intent']
       });
-      return {
-        id: subscription.id,
-        status: subscription.status
-      };
     } catch (error) {
-      throw new HttpException(
-        `Stripe subscription creation failed: ${error.message}`,
-        HttpStatus.BAD_REQUEST
-      );
+      throwError('Error creating subscription', HttpStatus.BAD_REQUEST);
     }
-  }
-
-  async handleWebhookEvent(body: any): Promise<void> {
-    console.log('Stripe webhook received (use dedicated Stripe webhook handler)');
   }
 }

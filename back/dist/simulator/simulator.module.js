@@ -8,18 +8,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SimulatorModule = void 0;
 const common_1 = require("@nestjs/common");
-const simulator_service_1 = require("./simulator.service");
 const simulator_controller_1 = require("./simulator.controller");
-const firebase_module_1 = require("../firebase/firebase.module");
+const simulator_service_1 = require("./simulator.service");
 let SimulatorModule = class SimulatorModule {
 };
 exports.SimulatorModule = SimulatorModule;
 exports.SimulatorModule = SimulatorModule = __decorate([
     (0, common_1.Module)({
-        imports: [firebase_module_1.FirebaseModule],
         controllers: [simulator_controller_1.SimulatorController],
         providers: [simulator_service_1.SimulatorService],
-        exports: [simulator_service_1.SimulatorService]
+        exports: [simulator_service_1.SimulatorService],
     })
 ], SimulatorModule);
 //# sourceMappingURL=simulator.module.js.map

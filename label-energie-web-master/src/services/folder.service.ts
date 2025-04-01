@@ -3,9 +3,8 @@ import { folderKeys } from "./keys.service";
 import { FolderDocumentType, FolderType, TFolder } from "@/types/folder.type";
 import { db } from "@/config/firebase";
 import { collection, doc, getDocs, updateDoc, deleteDoc, addDoc, getDoc } from "firebase/firestore";
-import { auth } from "@/config/firebase";
-import { query, where } from "firebase/firestore";
-import axios from 'axios';  // Add this import
+import { auth } from "@/config/firebase"; // Add this import
+import { query, where } from "firebase/firestore"; // Add this import
 
 export function useFolders() {
   return useQuery({
@@ -134,95 +133,65 @@ export function useAddDocumentsToFolder() {
     },
   });
 }
-
-// Add this mutation to your existing folder.service.ts
-export const useGeneratePdf = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (folderId: string) => {
-      const user = auth.currentUser;
-      if (!user) throw new Error('Utilisateur non authentifié');
-
-      // Get folder data first to validate
-      const folderRef = doc(db, 'folders', folderId);
-      const folderDoc = await getDoc(folderRef);
-      
-      if (!folderDoc.exists()) {
-        throw new Error('Dossier introuvable');
-      }
-
-      const folderData = folderDoc.data();
-      
-      // Get simulation data
-      const simulationId = folderData.simulationId;
-      if (!simulationId) {
-        throw new Error('ID de simulation manquant');
-      }
-
-      // Verify simulation exists and get its data
-      const simulationRef = doc(db, 'simulations', simulationId);
-      const simulationDoc = await getDoc(simulationRef);
-      
-      if (!simulationDoc.exists()) {
-        throw new Error('Simulation introuvable');
-      }
-
-      const simulationData = simulationDoc.data();
-      console.log('[PDF Generation] Données complètes:', {
-        folderId,
-        simulationId,
-        simulationData,
-        folderData,
-        timestamp: new Date().toISOString()
-      });
-
-      // Validate simulation data
-      if (!simulationData.products || !Array.isArray(simulationData.products)) {
-        throw new Error('Données de simulation invalides');
-      }
-
-      const token = await user.getIdToken(true);
-      
-      try {
-        const response = await axios.post<{ pdfUrl: string }>(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/folders/${folderId}/generate-pdf`,
-          {
-            simulationId,
-            simulationData // Send complete simulation data
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            timeout: 180000
-          }
-        );
-
-        if (!response.data?.pdfUrl) {
-          throw new Error('URL du PDF manquante dans la réponse');
-        }
-
-        // Update folder with PDF URL
-        await updateDoc(folderRef, {
-          pdfUrl: response.data.pdfUrl,
-          updatedAt: new Date().toISOString()
-        });
-
-        return response.data.pdfUrl;
-      } catch (error: any) {
-        console.error('[PDF Generation] Detailed error:', {
-          folderId,
-          error: error.response?.data || error.message,
-          status: error.response?.status,
-          stack: error.stack
-        });
-        throw new Error(
-          error.response?.data?.message || 
-          'Erreur lors de la génération du PDF. Veuillez réessayer.'
-        );
-      }
-    }
+// Modification de la fonction de création
+const createFolder = async (data: Partial<TFolder>) => {
+  const token = await auth.currentUser?.getIdToken(true);
+  
+  const response = await fetch('/api/folders', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
   });
+  
+  if (!response.ok) {
+    throw new Error('Failed to create folder');
+  }
+  
+  return response.json();
 };
+
+// Add this new function to download PDF
+export async function downloadFolderPdf(folderId: string) {
+  try {
+    const token = await auth.currentUser?.getIdToken(true);
+    
+    const folderRef = doc(db, 'folders', folderId);
+    const folderSnapshot = await getDoc(folderRef);
+    const folderData = folderSnapshot.data();
+
+    if (!folderData) {
+      throw new Error('Dossier non trouvé');
+    }
+
+    // Rename this response variable to pdfResponse
+    const pdfResponse = await fetch(
+      `http://localhost:3002/api/folders/${folderId}/pdf`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    if (!pdfResponse.ok) {
+      throw new Error('Failed to download PDF');
+    }
+
+    const blob = await pdfResponse.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `synthese-${folderId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  } catch (error) {
+    console.error('Error downloading PDF:', error);
+    throw error;
+  }
+}

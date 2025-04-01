@@ -1,22 +1,7 @@
 import { PaymentService } from './payment.service';
-import { GoCardlessService } from './gocardless/gocardless.service';
+import { TCreatePaymentBody } from './payment.type';
 export declare class PaymentController {
-    private readonly stripeService;
-    private readonly gocardlessService;
-    constructor(stripeService: PaymentService, gocardlessService: GoCardlessService);
-    createSubscription(body: {
-        email: string;
-        paymentMethodId: string;
-        interval: 'month' | 'year';
-        contract: {
-            type: 'essentiel' | 'liberte' | 'securite';
-            productIds: number[];
-        };
-    }, provider?: string): Promise<{
-        success: boolean;
-        provider: string;
-        subscriptionId: any;
-        status: any;
-        customerId: string;
-    }>;
+    private readonly paymentService;
+    constructor(paymentService: PaymentService);
+    createSubscription(body: TCreatePaymentBody): Promise<import("stripe").Stripe.Response<import("stripe").Stripe.Subscription>>;
 }

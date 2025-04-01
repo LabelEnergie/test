@@ -42,6 +42,7 @@ import { uploadFiles } from "@/services/file.service";
 import { getFileNameByUrl, getFileNamesByUrls } from "@/utils/file";
 import TextHighlighter from "../shared/TextHighlighter";
 import { Input } from "../shared/form/Input";
+import { downloadFolderPdf } from "@/services/folder.service"; // Add this import
 
 export interface FolderModalRef {
   onOpen(folder: TFolder): void;
@@ -70,20 +71,21 @@ const DEFAULT_FILES_SCHEMA = (folder?: TFolder) => ({
   file5: folder?.documents?.find((f) => f.type == FolderDocumentType.Other)
     ?.url,
 });
+
 interface FolderModalProps {
   folders?: TFolder[]; // Used to refresh modal when cache is updated
   isAdmin?: boolean;
   buttons?(props: { folder: TFolder }): JSX.Element;
 }
-import { useGeneratePdf } from "@/services/folder.service";
-import { useToast } from "@chakra-ui/react";
+
 export default forwardRef<FolderModalRef, FolderModalProps>((props, ref) => {
   const { folders, isAdmin, buttons: Buttons } = props;
+
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [folder, setFolder] = useState<TFolder>();
-  const [isPdfLoading, setIsPdfLoading] = useState(false);
-  const generatePdfMutation = useGeneratePdf();
-  const toast = useToast();
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  // Ajout des logs pour suivre l'état du modal
   useEffect(() => {
     console.log('FolderModal state:', {
       isOpen,
@@ -97,6 +99,8 @@ export default forwardRef<FolderModalRef, FolderModalProps>((props, ref) => {
       timestamp: new Date().toISOString()
     });
   }, [isOpen, folder]);
+
+  // Log pour le cache des dossiers
   useEffect(() => {
     console.log('Folders cache update:', {
       hasFolders: !!folders,
@@ -104,6 +108,7 @@ export default forwardRef<FolderModalRef, FolderModalProps>((props, ref) => {
       timestamp: new Date().toISOString()
     });
   }, [folders]);
+
   useImperativeHandle(ref, () => ({
     onOpen: (f) => {
       console.log('Opening folder modal:', {
@@ -122,25 +127,34 @@ export default forwardRef<FolderModalRef, FolderModalProps>((props, ref) => {
       onClose();
     },
   }));
+
   const { mutate: deleteFolder, isPending } = useDeleteFolder();
   const { mutate: addDocumentsToFolder } = useAddDocumentsToFolder();
-  const { mutate: updateFolderNum, isPending: isChangingNumMPR } = useChangeFolderNumMPRAdmin();
-  const { mutate: completeFolder, isPending: isCompletingFolder } = useCompleteFolder();
+  const { mutate: updateFolderNum, isPending: isChangingNumMPR } =
+    useChangeFolderNumMPRAdmin();
+  const { mutate: completeFolder, isPending: isCompletingFolder } =
+    useCompleteFolder();
+
   const [isUploadingFiles, setIsUploadingFiles] = useState(false);
+
   const { deletion } = useModals();
+
   const [newFiles, setNewFiles] = useState<
     { file: File; type: FolderDocumentType }[]
   >([]);
+
   const form = useZodForm({
     schema,
     defaultValues: DEFAULT_FILES_SCHEMA(folder),
   });
+
   const formNumMPR = useZodForm({
     schema: schemaMPR,
     defaultValues: {
       numMPR: "",
     },
   });
+
   const inputsFileDisabled = isAdmin
     ? true
     : folder
@@ -150,15 +164,8 @@ export default forwardRef<FolderModalRef, FolderModalProps>((props, ref) => {
     : true;
 
   useEffect(() => {
+    // If folders cache is updated, update state
     if (folder && folders) {
-      console.log('[Products Debug]', {
-        products: folder.products,
-        values: folder.products?.map(p => ({
-          id: p.id,
-          type: p.type,
-          value: p.value
-        }))
-      });
       const freshFolder = folders.find((f) => f.id == folder.id);
       if (
         freshFolder &&
@@ -182,6 +189,7 @@ export default forwardRef<FolderModalRef, FolderModalProps>((props, ref) => {
       file4
     );
   }, [folder, form.watch()]);
+
   useImperativeHandle(ref, () => ({
     onOpen: (f) => {
       setFolder(f);
@@ -194,8 +202,10 @@ export default forwardRef<FolderModalRef, FolderModalProps>((props, ref) => {
       onClose();
     },
   }));
+
   function onSendCompletedFolder() {
     if (!folder) return;
+
     completeFolder(
       { id: folder.id },
       {
@@ -203,10 +213,13 @@ export default forwardRef<FolderModalRef, FolderModalProps>((props, ref) => {
       }
     );
   }
+
   async function submitNewDocuments() {
     if (newFiles.length == 0 || !folder) return;
+
     setIsUploadingFiles(true);
     const newFilesNames = await uploadFiles(newFiles.map((f) => f.file));
+
     addDocumentsToFolder(
       {
         id: folder.id,
@@ -226,11 +239,14 @@ export default forwardRef<FolderModalRef, FolderModalProps>((props, ref) => {
       }
     );
   }
+
   function updateNumMPR() {
     if (!folder) return;
+
     const numMPR = formNumMPR.getValues("numMPR");
     updateFolderNum({ id: folder.id, numMPR });
   }
+
   function onAddFile(file: File | null = null, type: FolderDocumentType) {
     if (file) {
       setNewFiles((f) => [...f, { file, type }]);
@@ -238,6 +254,7 @@ export default forwardRef<FolderModalRef, FolderModalProps>((props, ref) => {
       setNewFiles((f) => f.filter(({ type: t }) => type != t));
     }
   }
+
   async function onCancelFolder() {
     const response = await deletion(
       `Annuler le dossier ${folder!.name}`,
@@ -245,6 +262,7 @@ export default forwardRef<FolderModalRef, FolderModalProps>((props, ref) => {
       "Oui",
       "Non"
     );
+
     if (response) {
       deleteFolder(
         { id: folder!.id },
@@ -256,83 +274,6 @@ export default forwardRef<FolderModalRef, FolderModalProps>((props, ref) => {
       );
     }
   }
-  const handleGeneratePdf = async () => {
-    if (!folder?.id) return;
-
-    // Validate folder data
-    if (!folder.products?.length) {
-      toast({
-        title: 'Données manquantes',
-        description: 'Les données du projet sont requises pour générer le PDF',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-      return;
-    }
-
-    // Log folder state before generation
-    console.log('[PDF Generation] Folder state:', {
-      id: folder.id,
-      products: folder.products.map(p => ({ id: p.id, type: p.type })),
-      documents: folder.documents?.map(d => ({ type: d.type, name: d.name })),
-      status: folder.status
-    });
-    
-    try {
-      setIsPdfLoading(true);
-      const pdfUrl = await generatePdfMutation.mutateAsync(folder.id);
-      
-      if (!pdfUrl?.trim()) {
-        throw new Error('URL de génération invalide');
-      }
-
-      // Handle PDF opening
-      const newWindow = window.open(pdfUrl, '_blank', 'noopener,noreferrer');
-      if (!newWindow) {
-        toast({
-          title: 'Téléchargement PDF',
-          description: 'Le PDF a été généré avec succès. Cliquez pour le télécharger.',
-          status: 'success',
-          duration: null,
-          isClosable: true,
-          render: ({ onClose }) => (
-            <Box p={4} bg="white" borderRadius="md" shadow="lg">
-              <VStack spacing={3}>
-                <Text>Le PDF est prêt</Text>
-                <Button
-                  colorScheme="blue"
-                  onClick={() => {
-                    window.location.href = pdfUrl;
-                    onClose();
-                  }}
-                >
-                  Télécharger
-                </Button>
-              </VStack>
-            </Box>
-          )
-        });
-      }
-    } catch (error: any) {
-      console.error('[PDF Generation] Detailed error:', {
-        folderId: folder.id,
-        error: error?.message,
-        response: error?.response?.data,
-        stack: error?.stack
-      });
-      
-      toast({
-        title: 'Erreur de génération',
-        description: 'Une erreur est survenue lors de la génération du PDF. Veuillez réessayer plus tard.',
-        status: 'error',
-        duration: 8000,
-        isClosable: true,
-      });
-    } finally {
-      setIsPdfLoading(false);
-    }
-  };
 
   if (!folder) return null;
   return (
@@ -351,9 +292,7 @@ export default forwardRef<FolderModalRef, FolderModalProps>((props, ref) => {
           <Section title={toPlural("Projet", folder.products)}>
             <VStack align="stretch" fontSize={20}>
               {folder.products.map((p) => (
-                <Text key={p.id}>
-                  {p.id}: {Array.isArray(p.value) ? p.value.join(', ') : p.value}
-                </Text>
+                <Text key={p.id}>{p.title}</Text>
               ))}
             </VStack>
           </Section>
@@ -402,11 +341,19 @@ export default forwardRef<FolderModalRef, FolderModalProps>((props, ref) => {
               </Section>
             )}
           </Stack>
+
+          {/* <Section title="Date de la demande">
+            <Text fontSize={25} color="king" mt={-3}>
+              {formatDate(folder.date)}
+            </Text>
+          </Section> */}
         </Flex>
       </Stack>
+
       <Section title="Documents">
         <Text>
-          Afin de finaliser votre dossier, merci de nous fournir les documents suivants
+          Afin de finaliser votre dossier, merci de nous fournir les documents
+          suivants
         </Text>
         <Form form={form} onSubmit={() => submitNewDocuments()}>
           <Grid
@@ -465,16 +412,27 @@ export default forwardRef<FolderModalRef, FolderModalProps>((props, ref) => {
                   >
                     ENVOYER MON DOSSIER
                   </Button>
-                )}
+              )}
               <Button
                 fontSize={16}
                 variant="outline"
                 w="full"
-                onClick={handleGeneratePdf}
-                isLoading={isPdfLoading}
-                loadingText="Génération..."
+                isLoading={isGeneratingPdf}
+                onClick={async (e) => {
+                  e.preventDefault();
+                  if (isGeneratingPdf) return;
+                  
+                  setIsGeneratingPdf(true);
+                  try {
+                    await downloadFolderPdf(folder.id);
+                  } catch (error) {
+                    console.error('Failed to download PDF:', error);
+                  } finally {
+                    setIsGeneratingPdf(false);
+                  }
+                }}
               >
-                VOIR LA SYNTHÈSE
+                {isGeneratingPdf ? 'GÉNÉRATION EN COURS...' : 'VOIR LA SYNTHÈSE'}
               </Button>
             </VStack>
           </Grid>
@@ -503,6 +461,7 @@ export default forwardRef<FolderModalRef, FolderModalProps>((props, ref) => {
     </Modal>
   );
 });
+
 interface SectionProps extends BoxProps {
   title: string;
 }

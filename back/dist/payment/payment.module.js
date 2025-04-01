@@ -8,18 +8,17 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentModule = void 0;
 const common_1 = require("@nestjs/common");
-const payment_controller_1 = require("./payment.controller");
 const payment_service_1 = require("./payment.service");
-const gocardless_service_1 = require("./gocardless/gocardless.service");
-const gocardless_webhook_controller_1 = require("./gocardless/gocardless.webhook.controller");
+const payment_controller_1 = require("./payment.controller");
+const tools_module_1 = require("../tools/tools.module");
 let PaymentModule = class PaymentModule {
 };
 exports.PaymentModule = PaymentModule;
 exports.PaymentModule = PaymentModule = __decorate([
     (0, common_1.Module)({
-        controllers: [payment_controller_1.PaymentController, gocardless_webhook_controller_1.GoCardlessWebhookController],
-        providers: [payment_service_1.PaymentService, gocardless_service_1.GoCardlessService],
-        exports: [payment_service_1.PaymentService, gocardless_service_1.GoCardlessService]
+        imports: [tools_module_1.ToolsModule],
+        controllers: [payment_controller_1.PaymentController],
+        providers: [payment_service_1.PaymentService]
     })
 ], PaymentModule);
 //# sourceMappingURL=payment.module.js.map

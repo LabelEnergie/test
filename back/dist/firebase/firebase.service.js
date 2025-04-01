@@ -5,47 +5,65 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FirebaseService = void 0;
 const common_1 = require("@nestjs/common");
 const admin = require("firebase-admin");
 const constants_1 = require("../constants");
 let FirebaseService = class FirebaseService {
-    onModuleInit() {
+    constructor() {
         if (!admin.apps.length) {
-            const firebaseConfig = (0, constants_1.ENV)().FIREBASE;
-            if (!firebaseConfig.PROJECT_ID || !firebaseConfig.CLIENT_EMAIL || !firebaseConfig.PRIVATE_KEY) {
-                throw new Error('Firebase credentials are missing. Required: PROJECT_ID, CLIENT_EMAIL, PRIVATE_KEY');
-            }
             admin.initializeApp({
                 credential: admin.credential.cert({
-                    projectId: firebaseConfig.PROJECT_ID,
-                    clientEmail: firebaseConfig.CLIENT_EMAIL,
-                    privateKey: firebaseConfig.PRIVATE_KEY.replace(/\\n/g, '\n'),
+                    projectId: (0, constants_1.ENV)().FIREBASE.PROJECT_ID,
+                    clientEmail: (0, constants_1.ENV)().FIREBASE.CLIENT_EMAIL,
+                    privateKey: (0, constants_1.ENV)().FIREBASE.PRIVATE_KEY.replace(/\\n/g, '\n'),
                 }),
-                storageBucket: firebaseConfig.STORAGE_BUCKET,
+                storageBucket: (0, constants_1.ENV)().FIREBASE.STORAGE_BUCKET
             });
         }
-        this.firestore = admin.firestore();
         this.auth = admin.auth();
+        this.firestore = admin.firestore();
         this.storage = admin.storage();
-        this.bucket = this.storage.bucket();
     }
     async getCollection(collectionName) {
         const snapshot = await this.firestore.collection(collectionName).get();
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
     async getDocument(collectionName, docId) {
-        const doc = await this.firestore.collection(collectionName).doc(docId).get();
+        console.log(`Attempting to fetch document from ${collectionName} with ID:`, docId);
+        const docRef = this.firestore.collection(collectionName).doc(docId);
+        console.log('Document reference:', docRef.path);
+        const doc = await docRef.get();
+        console.log('Document exists:', doc.exists);
+        if (doc.exists) {
+            console.log('Document data:', doc.data());
+        }
         if (!doc.exists)
             return null;
         return { id: doc.id, ...doc.data() };
     }
     async createDocument(collectionName, data) {
-        const docRef = this.firestore.collection(collectionName).doc(data.id);
-        await docRef.set(data);
-        const newDoc = await docRef.get();
-        return { id: newDoc.id, ...newDoc.data() };
+        console.log('Creating document in collection:', collectionName);
+        console.log('Data to save:', JSON.stringify(data, null, 2));
+        try {
+            const docRef = this.firestore.collection(collectionName).doc(data.id);
+            await docRef.set(data);
+            console.log('Document created with ID:', data.id);
+            const newDoc = await docRef.get();
+            console.log('Document creation verified:', newDoc.exists);
+            if (newDoc.exists) {
+                console.log('Saved data:', newDoc.data());
+            }
+            return { id: newDoc.id, ...newDoc.data() };
+        }
+        catch (error) {
+            console.error('Error creating document:', error);
+            throw error;
+        }
     }
     async updateDocument(collectionName, docId, data) {
         await this.firestore.collection(collectionName).doc(docId).update(data);
@@ -60,44 +78,19 @@ let FirebaseService = class FirebaseService {
             .get();
         return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     }
-    async uploadFile(filePath, fileBuffer, contentType, userId) {
-        const file = this.bucket.file(filePath);
-        await file.save(fileBuffer, {
-            metadata: {
-                contentType,
-                metadata: {
-                    userId,
-                    uploadedAt: new Date().toISOString()
-                }
-            }
-        });
-    }
-    async getFileUrl(filePath) {
-        const [url] = await this.bucket.file(filePath).getSignedUrl({
-            action: 'read',
-            expires: '03-09-2491',
-        });
-        return url;
-    }
-    async deleteFile(filePath) {
-        await this.bucket.file(filePath).delete();
-    }
-    async fileExists(filePath) {
-        const [exists] = await this.bucket.file(filePath).exists();
-        return exists;
-    }
     async verifyToken(token) {
         return this.auth.verifyIdToken(token);
     }
     async getUser(uid) {
         return this.auth.getUser(uid);
     }
-    async getPublicUrl(filePath) {
-        return `https://storage.googleapis.com/${this.bucket.name}/${filePath}`;
+    async onModuleInit() {
+        console.log('FirebaseService initialized');
     }
 };
 exports.FirebaseService = FirebaseService;
 exports.FirebaseService = FirebaseService = __decorate([
-    (0, common_1.Injectable)()
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [])
 ], FirebaseService);
 //# sourceMappingURL=firebase.service.js.map

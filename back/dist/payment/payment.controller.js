@@ -15,57 +15,36 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentController = void 0;
 const common_1 = require("@nestjs/common");
 const payment_service_1 = require("./payment.service");
-const gocardless_service_1 = require("./gocardless/gocardless.service");
-const public_decorator_1 = require("../auth/decorators/public.decorator");
+const constants_1 = require("../constants");
+const error_1 = require("../utils/error");
 let PaymentController = class PaymentController {
-    constructor(stripeService, gocardlessService) {
-        this.stripeService = stripeService;
-        this.gocardlessService = gocardlessService;
+    constructor(paymentService) {
+        this.paymentService = paymentService;
     }
-    async createSubscription(body, provider = 'stripe') {
+    async createSubscription(body) {
         try {
-            provider = provider.toLowerCase();
-            if (provider === 'gocardles')
-                provider = 'gocardless';
-            const service = provider === 'stripe'
-                ? this.stripeService
-                : this.gocardlessService;
-            if (!service) {
-                throw new common_1.HttpException('Invalid payment provider. Use "stripe" or "gocardless"', common_1.HttpStatus.BAD_REQUEST);
-            }
-            const customer = await service.createCustomer(body.email, body.paymentMethodId);
-            const priceId = await service.getPriceId(body.email, body.interval, body.contract.type, body.contract.productIds);
-            const subscription = await service.createSubscription(customer.id, body.paymentMethodId, priceId);
-            return {
-                success: true,
-                provider,
-                subscriptionId: subscription.id,
-                status: subscription.status,
-                customerId: customer.id
-            };
+            const customer = await this.paymentService.createCustomer(body.email, body.paymentMethodId);
+            const priceId = await this.paymentService.getPriceIdByType(body.email, body.interval, body.contract.type, body.contract.productIds);
+            const subscription = await this.paymentService.createSubscription(customer.id, body.paymentMethodId, priceId);
+            return subscription;
         }
         catch (error) {
-            throw new common_1.HttpException({
-                status: common_1.HttpStatus.BAD_REQUEST,
-                message: error.message,
-                provider
-            }, common_1.HttpStatus.BAD_REQUEST);
+            console.log(error);
+            (0, error_1.throwError)(error.message, common_1.HttpStatus.BAD_REQUEST);
         }
     }
 };
 exports.PaymentController = PaymentController;
 __decorate([
     (0, common_1.Post)('create-subscription'),
-    (0, public_decorator_1.Public)(),
+    (0, constants_1.Public)(),
     __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Query)('provider')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], PaymentController.prototype, "createSubscription", null);
 exports.PaymentController = PaymentController = __decorate([
     (0, common_1.Controller)('payment'),
-    __metadata("design:paramtypes", [payment_service_1.PaymentService,
-        gocardless_service_1.GoCardlessService])
+    __metadata("design:paramtypes", [payment_service_1.PaymentService])
 ], PaymentController);
 //# sourceMappingURL=payment.controller.js.map

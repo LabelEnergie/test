@@ -20,14 +20,9 @@ import { Public } from 'src/constants';
 import { Auth, AuthGuard } from 'src/guard';
 import { TAuth } from 'src/auth/auth.types';
 import { FileValidationPipe } from './files.validation';
-import { UploadedFile } from './files.types'; // Importez l'interface au lieu de la définir
-
-// Supprimez la définition locale de l'interface UploadedFile
-
-// Remove the Multer import
-
-// Add this type import instead
+import { UploadedFile } from './files.types'; 
 import type { Multer } from 'multer';
+import { Client } from 'pg';
 
 @Controller('files')
 @UseGuards(AuthGuard)
@@ -62,7 +57,7 @@ export class FilesController {
   @UseInterceptors(AnyFilesInterceptor())
   async uploadFile(
     @Auth('auth') auth: TAuth,
-    @UploadedFiles() files: Express.Multer.File[],  // Changed type here
+    @UploadedFiles() files: Multer.File[],  
   ) {
     return await this.filesService.uploadFile(auth, files);
   }

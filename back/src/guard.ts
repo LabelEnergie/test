@@ -1,119 +1,124 @@
 import {
   CanActivate,
   ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-  createParamDecorator,
-  Logger
-} from '@nestjs/common';
+   Injectable,
+   UnauthorizedException,
+   createParamDecorator
+ } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { IS_PUBLIC_KEY } from './constants';
+import { IS_ADMIN_KEY, IS_PUBLIC_KEY } from './constants';  // Changé de 'src/constants' à './constants'
 import { FirebaseService } from './firebase/firebase.service';
+import { verify } from 'jsonwebtoken';
+import { ENV } from './constants';
+import { JwtPayload } from 'jsonwebtoken';
+
+// Add this interface above the AuthGuard class
+interface CustomJwtPayload extends JwtPayload {
+  id: string;
+  email: string;
+  isAdmin?: boolean;
+}
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  private readonly logger = new Logger(AuthGuard.name);
-
   constructor(
     private reflector: Reflector,
     private firebaseService: FirebaseService
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
-
-    this.logger.debug({
-      message: 'Route access check',
-      path: request.url,
-      method: request.method,
-      isPublic
+    console.log('Route access check:', {
+      isPublic,
+      path: context.switchToHttp().getRequest().url,
+      method: context.switchToHttp().getRequest().method
     });
 
     if (isPublic) {
       return true;
     }
 
+    const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
+    console.log('Token extraction:', {
+      hasToken: !!token,
+      tokenLength: token?.length,
+      timestamp: new Date().toISOString()
+    });
+
     if (!token) {
-      this.logger.warn('No authentication token provided');
-      throw new UnauthorizedException('Authentication token missing');
+      console.error('Authentication failed: No token provided');
+      throw new UnauthorizedException();
     }
-
+    
     try {
-      const decodedToken = await this.verifyFirebaseToken(token);
-      this.setRequestAuth(request, decodedToken, token);
+      console.log('Attempting token verification...');
+      const decodedToken = await this.firebaseService.auth.verifyIdToken(token);
       
-      this.logger.log({
-        message: 'Successful authentication',
-        userId: decodedToken.uid,
+      // Log unique pour la vérification du token
+      console.log('Token verification details:', {
+        receivedUid: decodedToken.uid,
         email: decodedToken.email,
-        path: request.url
+        authTime: decodedToken.auth_time,
+        requestId: Math.random().toString(36).substring(7), // Identifiant unique de requête
+        timestamp: new Date().toISOString()
       });
-
+      
+      request['auth'] = {
+        id: decodedToken.uid,
+        email: decodedToken.email,
+        emailVerified: decodedToken.email_verified,
+        token: token
+      };
+      
+      // Un seul log pour les données d'auth
+      console.log('Auth data set:', {
+        hasAuth: !!request['auth'],
+        userId: request['auth'].id,
+        requestPath: request.url,
+        method: request.method,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Log du body uniquement si c'est une requête POST
+      if (request.method === 'POST') {
+        console.log('Request payload:', {
+          path: request.url,
+          timestamp: new Date().toISOString(),
+          bodyLength: JSON.stringify(request.body).length
+        });
+      }
+      
       return true;
     } catch (error) {
-      this.logger.error({
-        message: 'Authentication failed',
-        error: error.message,
-        stack: error.stack,
-        path: request.url
+      console.error('Authentication error:', {
+        error: {
+          name: error.name,
+          message: error.message,
+          code: error.code,
+          stack: error.stack
+        },
+        requestPath: request.url,
+        timestamp: new Date().toISOString()
       });
-      
-      throw new UnauthorizedException(this.getFriendlyError(error));
+      throw new UnauthorizedException(error.message);
     }
   }
 
-  private async verifyFirebaseToken(token: string) {
-    try {
-      return await this.firebaseService.auth.verifyIdToken(token, true);
-    } catch (error) {
-      // Gestion spécifique des erreurs Firebase
-      if (error.code === 'auth/id-token-expired') {
-        throw new Error('Token expired - please refresh your authentication');
-      } else if (error.code === 'auth/argument-error') {
-        throw new Error('Invalid token format - ensure you are using a valid Firebase ID token');
-      }
-      throw error;
-    }
-  }
-
-  private setRequestAuth(request: any, decodedToken: any, rawToken: string) {
-    request.auth = {
-      id: decodedToken.uid,
-      email: decodedToken.email,
-      emailVerified: decodedToken.email_verified,
-      isAdmin: decodedToken.admin || false,
-      token: rawToken,
-      authTime: new Date(decodedToken.auth_time * 1000)
-    };
-  }
-
-  private extractTokenFromHeader(request: any): string | null {
-    const authHeader = request.headers?.authorization;
-    if (!authHeader) return null;
-    
-    const [type, token] = authHeader.split(' ');
-    return type === 'Bearer' ? token : null;
-  }
-
-  private getFriendlyError(error: any): string {
-    if (error.message.includes('Firebase ID token has no "kid" claim')) {
-      return 'Invalid authentication token format - please login again';
-    }
-    if (error.message.includes('Token expired')) {
-      return 'Your session has expired - please login again';
-    }
-    return 'Authentication failed - please check your credentials';
+  private extractTokenFromHeader(request: Request): string | null {
+    const authorization: string = request.headers?.['authorization'];
+    if (!authorization) return null;
+    const [_, token] = authorization.split(' ', 2);
+    return token;
   }
 }
 
 export const Auth = createParamDecorator(
-  (data: string, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest();
+  (data: string, context: ExecutionContext) => {
+    const request = context.switchToHttp().getRequest();
     return request.auth;
-  }
+  },
 );

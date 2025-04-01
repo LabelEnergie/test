@@ -1,12 +1,10 @@
 import { Module } from '@nestjs/common';
-import { SimulatorService } from './simulator.service';
 import { SimulatorController } from './simulator.controller';
-import { FirebaseModule } from 'src/firebase/firebase.module';
+import { SimulatorService } from './simulator.service';
 
 @Module({
-  imports: [FirebaseModule],
   controllers: [SimulatorController],
   providers: [SimulatorService],
-  exports: [SimulatorService]
+  exports: [SimulatorService], // Important: exportez le service
 })
 export class SimulatorModule {}

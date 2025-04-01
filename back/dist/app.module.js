@@ -8,22 +8,23 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
-const maintenance_module_1 = require("./maintenance/maintenance.module");
 const config_1 = require("@nestjs/config");
-const app_controller_1 = require("./app.controller");
-const app_service_1 = require("./app.service");
-const simulator_module_1 = require("./simulator/simulator.module");
-const auth_module_1 = require("./auth/auth.module");
-const files_module_1 = require("./files/files.module");
-const invoices_module_1 = require("./invoices/invoices.module");
 const core_1 = require("@nestjs/core");
-const guard_1 = require("./guard");
 const folders_module_1 = require("./folders/folders.module");
 const articles_module_1 = require("./articles/articles.module");
 const chat_module_1 = require("./chat/chat.module");
 const tools_module_1 = require("./tools/tools.module");
 const payment_module_1 = require("./payment/payment.module");
 const firebase_module_1 = require("./firebase/firebase.module");
+const simulator_module_1 = require("./simulator/simulator.module");
+const auth_module_1 = require("./auth/auth.module");
+const files_module_1 = require("./files/files.module");
+const invoices_module_1 = require("./invoices/invoices.module");
+const maintenance_module_1 = require("./maintenance/maintenance.module");
+const app_controller_1 = require("./app.controller");
+const app_service_1 = require("./app.service");
+const guard_1 = require("./guard");
+const pdf_module_1 = require("./pdf/pdf.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -44,6 +45,7 @@ exports.AppModule = AppModule = __decorate([
             maintenance_module_1.MaintenanceModule,
             tools_module_1.ToolsModule,
             payment_module_1.PaymentModule,
+            pdf_module_1.PdfModule
         ],
         controllers: [app_controller_1.AppController],
         providers: [
